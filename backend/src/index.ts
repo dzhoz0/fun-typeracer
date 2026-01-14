@@ -1,11 +1,17 @@
 import express from 'express';
+import cors from 'cors';
 import { Server } from 'socket.io';
 import { createServer } from 'http';
 import { setupSocket } from "./socket/index.js";
 import { rooms } from './state/rooms.js';
 
 const app = express();
+app.use(cors({
+    origin: "*"
+}));
+app.options('/', cors());
 app.use(express.text());
+
 const httpServer = createServer(app);
 
 const io = new Server(httpServer, {

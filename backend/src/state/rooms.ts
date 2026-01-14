@@ -73,6 +73,7 @@ class Rooms {
         };
         this.players.push(newPlayer);
     }
+
 };
 
 class RoomStore {
