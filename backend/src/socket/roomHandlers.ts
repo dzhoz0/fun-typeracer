@@ -3,26 +3,29 @@ import { rooms } from "../state/rooms.js";
 import { Player } from "../state/rooms.js";
 
 export function registerRoomHandlers(io: Server, socket: Socket) {
-    socket.on("room:join", ({ roomId, name }) => {
+    socket.on("room:join", (data: string) => {
+        let { roomId, name } = JSON.parse(data) as { roomId: string; name: string };
         socket.join(roomId);
 
         const room = rooms.getRoom(roomId);
-        room.addPlayer(socket.id, name);
+        room.addPlayer(name);
 
-        socket.emit("room:state", room);
-        socket.to(roomId).emit("room:playerJoined", { id: socket.id, name });
+        // Also send the current room state to the player who just joined
+        io.to(roomId).emit("room:update", JSON.stringify(room));
     });
 
-    socket.on("room:send", ({ roomId, payload } : {roomId : string; payload: Player}) => {
+
+    socket.on("room:send", (data : string) => {
+        // Only send your own current player update
+        let { roomId, payload } = JSON.parse(data) as { roomId: string; payload: Player };
         if (!socket.rooms.has(roomId)) return;
         // Firstly, update our server state
         const room = rooms.getRoom(roomId);
-        const player = room.players.find((p) => p.id === socket.id);
-        if (player) {
-            player.typed = payload.typed;
-        }
+
+        room.modifyTyped(payload.name, payload.typed);
+
         // Then, broadcast to other players in the room, send them the whole room state for simplicity
-        socket.to(roomId).emit("room:update", room);
+        io.to(roomId).emit("room:update", JSON.stringify(room));
     });
 
 }

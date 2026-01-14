@@ -5,6 +5,7 @@ import { setupSocket } from "./socket/index.js";
 import { rooms } from './state/rooms.js';
 
 const app = express();
+app.use(express.text());
 const httpServer = createServer(app);
 
 const io = new Server(httpServer, {
@@ -23,8 +24,11 @@ app.get('/', (req, res) => {
 
 app.post('/createRoom', (req, res) => {
     // Create a room and return id
-    let roomId = rooms.newRoom();
+
+    console.log("Creating room with admin name:", req.body);
+    let roomId = rooms.newRoom(req.body);
     res.send(roomId);
+    // res.send(req.body);
 })
 
 httpServer.listen(PORT, () => {

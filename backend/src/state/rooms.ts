@@ -10,7 +10,6 @@ const wordSetsPath = path.join(__dirname, "../word_sets");
 const numWords = 50;
 
 export type Player = {
-    id: string,
     name: string,
     typed: string,
 };
@@ -20,19 +19,22 @@ class Rooms {
     players: Player[] = [];
     text: string = '';
     prankMode: number = 0;
+    started: boolean = false;
+    adminName: string = '';
 
-    constructor(id: string) {
+    rankings: string[] = [];
+
+    constructor(id: string, adminId: string) {
         this.id = id;
-
+        this.adminName = adminId;
         // prankMode is a random number from 0 to 4
         this.prankMode = Math.floor(Math.random() * 5);
 
         // It is always ensured word_set exists (actually only in frontend)
         let word_set = 'english_5k';
-        if(this.prankMode == 4) word_set = 'english_common_misspelled';
+        if(this.prankMode == 4) word_set = 'english_commonly_misspelled';
 
         const wordSetFile = path.join(wordSetsPath, `${word_set}.json`);
-
 
         // Generate random text for typing
         const wordSetData = fs.readFileSync(wordSetFile, 'utf-8');
@@ -46,9 +48,26 @@ class Rooms {
 
     }
 
-    addPlayer(id: string, name: string) {
+    modifyTyped(playerName: string, newTyped: string) {
+        const player = this.players.find((p) => p.name === playerName);
+        if (player) {
+            player.typed = newTyped;
+            if(player.typed == this.text && !this.rankings.includes(player.name)) {
+                this.rankings.push(player.name);
+            }
+        }
+    }
+
+    makeGameStarted(adminName: string) {
+        if(this.adminName !== adminName) {
+            // Should not happen if frontend is implemented correctly
+            throw new Error("Only admin can start the game");
+        }
+        this.started = true;
+    }
+
+    addPlayer(name: string) {
         const newPlayer: Player = {
-            id: id,
             name: name,
             typed: '',
         };
@@ -63,7 +82,7 @@ class RoomStore {
         this.rooms = new Map<String, Rooms>();
     }
 
-    newRoom(): string {
+    newRoom(adminName: string): string {
         // Generate a unique room ID (6 letter string)
         const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
         let roomId: string;
@@ -74,14 +93,16 @@ class RoomStore {
                 roomId += characters[randomIndex];
             }
         } while (this.rooms.has(roomId));
-        this.rooms.set(roomId, new Rooms(roomId));
+        this.rooms.set(roomId, new Rooms(roomId, adminName));
+        console.log("New room created with ID:", roomId, "by admin:", adminName);
         return roomId;
     }
 
     getRoom(roomId: string): Rooms {
+        console.log("Finding room:", roomId);
         if(!this.rooms.has(roomId)) {
             // This should never happen if frontend is implemented correctly
-            throw new Error("Room does not exist");
+            // throw new Error("Room does not exist");
         }
         return this.rooms.get(roomId)!;
     }
