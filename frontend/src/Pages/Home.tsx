@@ -9,7 +9,11 @@ function Home() {
             return;
         }
 
-        api.post('/createRoom', playerName).then((data) => {
+        api.post('/createRoom', playerName, {
+            headers: {
+                "Content-Type": "text/plain"
+            }
+        }).then((data) => {
             const roomId = data.data;
             // Redirect to room
             window.location.href = `/room/${roomId}`;
