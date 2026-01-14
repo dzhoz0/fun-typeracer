@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const wordSetsPath = path.join(__dirname, "../word_sets");
-const numWords = 50;
+const numWords = 5;
 
 export type Player = {
     name: string,
@@ -29,6 +29,8 @@ class Rooms {
         this.adminName = adminId;
         // prankMode is a random number from 0 to 4
         this.prankMode = Math.floor(Math.random() * 5);
+
+        // this.prankMode = 0; // For testing, disable prank mode
 
         // It is always ensured word_set exists (actually only in frontend)
         let word_set = 'english_5k';
@@ -52,7 +54,9 @@ class Rooms {
         const player = this.players.find((p) => p.name === playerName);
         if (player) {
             player.typed = newTyped;
+            console.log(player);
             if(player.typed == this.text && !this.rankings.includes(player.name)) {
+                console.log(`Player ${player.name} finished typing!`);
                 this.rankings.push(player.name);
             }
         }

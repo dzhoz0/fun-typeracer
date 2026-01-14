@@ -3,24 +3,43 @@ import type { Player, Room } from "../types/backend";
 import { useParams } from "react-router";
 import socket from "../lib/socket";
 
+/*
+* Prank modes:
+* 0. Remap keys aka shuffle layout
+* 1. caps lock is on, other words, uppercase only, needs shift to type lowercase
+* 2. double press to register a key
+* 3. latency until shown
+* 4. commonly misspelled words (no effect here, only on backend)
+* */
+
 type RoomClassProps = {
     params: {
         roomId?: string;
     };
 };
 
+type KeyState = {
+    key: string;
+    time: number;
+};
+
 type RoomClassState = {
     roomState?: Room;
     player?: Player;
     isAdmin: boolean;
+    doneTyping: boolean;
+    keyState: KeyState;
 };
 
 class RoomClass extends React.Component<
     RoomClassProps,
     RoomClassState
 > {
-    roomId?: string;
 
+    private lagBuffer: string[] = [];
+    private lagTimer: number | null = null;
+
+    roomId?: string;
     constructor(props: RoomClassProps) {
         super(props);
 
@@ -30,10 +49,125 @@ class RoomClass extends React.Component<
             roomState: undefined,
             player: undefined,
             isAdmin: false,
+            keyState: { key: "", time: 0 },
+            doneTyping: false,
         };
     }
 
+    handleKeyPress = async (event: KeyboardEvent) => {
+        if (!this.state.roomState?.started || this.state.doneTyping) {
+            return;
+        }
+
+        const name = localStorage.getItem("playerName") ?? "";
+        const currentTyped = this.state.player?.typed ?? "";
+
+        if (event.key === "Backspace") {
+            if (currentTyped.length === 0) return;
+
+            event.preventDefault();
+
+            const newTyped = currentTyped.slice(0, -1);
+
+            this.setState((prevState) => ({
+                player: prevState.player
+                    ? { ...prevState.player, typed: newTyped }
+                    : prevState.player,
+            }));
+
+            socket.emit(
+                "room:send",
+                JSON.stringify({
+                    roomId: this.roomId,
+                    payload: { name, typed: newTyped },
+                })
+            );
+
+            return;
+        }
+        // Allows (upper/lower) letters, space.
+        const validKeys = /^[a-zA-Z ]$/;
+        let key = event.key;
+        if (!validKeys.test(key)) return;
+
+
+        if(this.state.roomState.prankMode == 1) {
+            // Make uppercase if lowercase, and vice versa
+            if(key === key.toLowerCase()) {
+                key = key.toUpperCase();
+            } else {
+                key = key.toLowerCase();
+            }
+        }
+
+        if(this.state.roomState.prankMode == 2) {
+            const lastKeyState = this.state.keyState;
+            if(key === lastKeyState.key) {
+                const timeDiff = Date.now() - lastKeyState.time;
+                // Double press must be within 500ms
+                if(timeDiff > 500) {
+                    // Ignore this key press, wait for next
+                    this.setState({ keyState: { key: key, time: Date.now() } });
+                    return;
+                }
+            } else {
+                // Different key pressed, ignore this press
+                this.setState({ keyState: { key: key, time: Date.now() } });
+                return;
+            }
+        }
+
+        if (this.state.roomState.prankMode === 3) {
+            this.lagBuffer.push(key);
+
+            if (this.lagTimer === null) {
+                this.lagTimer = window.setTimeout(this.flushLagBuffer, 300);
+            }
+            return;
+        }
+
+        this.commitKey(key);
+    };
+
+
+    flushLagBuffer = () => {
+        if (!this.state.player) return;
+
+        const keyString = this.lagBuffer.join("");
+        this.lagBuffer = [];
+        this.lagTimer = null;
+
+        this.commitKey(keyString);
+    };
+    commitKey = (key: string) => {
+        const newTyped = this.state.player?.typed + key;
+
+        this.setState((prevState) => ({
+            player: prevState.player
+                ? { ...prevState.player, typed: newTyped }
+                : prevState.player,
+        }));
+
+        socket.emit(
+            "room:send",
+            JSON.stringify({
+                roomId: this.roomId,
+                payload: { name: this.state.player?.name, typed: newTyped },
+            })
+        );
+
+        if (newTyped === this.state.roomState?.text) {
+            this.setState({ doneTyping: true });
+        }
+
+        // Set last key state
+        this.setState({ keyState: { key: key, time: Date.now() } });
+    }
+
+
     componentDidMount() {
+        window.addEventListener("keydown", this.handleKeyPress);
+
         const name = localStorage.getItem("playerName") ?? "";
 
         if (!this.roomId || !name.trim()) return;
@@ -54,8 +188,9 @@ class RoomClass extends React.Component<
     }
 
     componentWillUnmount() {
-        socket.off("room:update", this.onRoomUpdate);
+        window.removeEventListener("keydown", this.handleKeyPress);
 
+        socket.off("room:update", this.onRoomUpdate);
         socket.emit(
             "room:leave",
             JSON.stringify({
