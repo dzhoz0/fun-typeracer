@@ -78,6 +78,9 @@ class Rooms {
         this.players.push(newPlayer);
     }
 
+    deletePlayer(name: string) {
+        this.players = this.players.filter((p) => p.name !== name);
+    }
 };
 
 class RoomStore {

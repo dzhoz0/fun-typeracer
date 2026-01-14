@@ -30,4 +30,15 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
         io.to(roomId).emit("room:update", JSON.stringify(room));
     });
 
+    socket.on("room:leave", (data: string) => {
+        let { roomId, name } = JSON.parse(data) as { roomId: string; name: string };
+        socket.leave(roomId);
+        console.log(`Player ${name} left room ${roomId}`);
+        // Find room
+        const room = rooms.getRoom(roomId);
+        room.deletePlayer(name);
+
+        // Broadcast updated room state
+        io.to(roomId).emit("room:update", JSON.stringify(room));
+    });
 }
