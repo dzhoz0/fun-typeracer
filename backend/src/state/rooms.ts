@@ -58,7 +58,7 @@ class Rooms {
         }
     }
 
-    makeGameStarted(adminName: string) {
+    makeGameStart(adminName: string) {
         if(this.adminName !== adminName) {
             // Should not happen if frontend is implemented correctly
             throw new Error("Only admin can start the game");

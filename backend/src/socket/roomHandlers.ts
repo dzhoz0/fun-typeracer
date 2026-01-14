@@ -16,6 +16,18 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
         io.to(roomId).emit("room:update", JSON.stringify(room));
     });
 
+    socket.on("room:start", (data: string) => {
+        let { roomId, name } = JSON.parse(data) as { roomId: string; name: string };
+        const room = rooms.getRoom(roomId);
+        try {
+            room.makeGameStart(name);
+            console.log(`Game started in room ${roomId} by admin ${name}`);
+
+            io.to(roomId).emit("room:update", JSON.stringify(room));
+        } catch (error) {
+            console.error(error);
+        }
+    });
 
     socket.on("room:send", (data : string) => {
         // Only send your own current player update
