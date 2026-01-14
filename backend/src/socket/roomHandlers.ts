@@ -10,6 +10,8 @@ export function registerRoomHandlers(io: Server, socket: Socket) {
         const room = rooms.getRoom(roomId);
         room.addPlayer(name);
 
+        console.log(`Player ${name} joined room ${roomId}`);
+
         // Also send the current room state to the player who just joined
         io.to(roomId).emit("room:update", JSON.stringify(room));
     });

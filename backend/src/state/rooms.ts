@@ -67,6 +67,10 @@ class Rooms {
     }
 
     addPlayer(name: string) {
+        // Only add if not already present
+        if(this.players.find((p) => p.name === name)) {
+            return;
+        }
         const newPlayer: Player = {
             name: name,
             typed: '',
