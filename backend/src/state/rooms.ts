@@ -14,6 +14,16 @@ export type Player = {
     typed: string,
 };
 
+function shuffleString(str: string) {
+    const arr = [...str]; // handles Unicode properly
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr.join("");
+}
+
+
 class Rooms {
     id: string;
     players: Player[] = [];
@@ -22,15 +32,26 @@ class Rooms {
     started: boolean = false;
     adminName: string = '';
 
+    layout: string = 'qwertyuiopasdfghjklzxcvbnm';
+    keyboardLayout: string[][] = [];
     rankings: string[] = [];
 
     constructor(id: string, adminId: string) {
         this.id = id;
         this.adminName = adminId;
         // prankMode is a random number from 0 to 4
-        this.prankMode = Math.floor(Math.random() * 5);
+        // this.prankMode = Math.floor(Math.random() * 5);
+        this.prankMode = 0;
+        if(this.prankMode == 0) {
+            this.layout = shuffleString(this.layout);
+        }
 
-        // this.prankMode = 0; // For testing, disable prank mode
+        this.keyboardLayout = [
+            this.layout.slice(0,10).split(''),
+            this.layout.slice(10,19).split(''),
+            this.layout.slice(19,26).split(''),
+            [" "]
+        ];
 
         // It is always ensured word_set exists (actually only in frontend)
         let word_set = 'english_5k';

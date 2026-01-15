@@ -4,7 +4,7 @@ type OnScreenKeyboardProps = {
 };
 
 
-export function OnScreenKeyboard({ layout, activeKeys = new Set() }: OnScreenKeyboardProps) {
+export default function OnScreenKeyboard({ layout, activeKeys = new Set() }: OnScreenKeyboardProps) {
     const classNames = (...parts: Array<string | false | null | undefined>) =>
         parts.filter(Boolean).join(' ');
 

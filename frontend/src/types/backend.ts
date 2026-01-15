@@ -10,5 +10,10 @@ export type Room = {
     prankMode: number;
     started: boolean;
     adminName: string;
+
+    layout: string;
+    keyboardLayout: string[][];
     rankings: string[];
+
 };
+
