@@ -3,6 +3,9 @@ import type { Player, Room } from "../types/backend";
 import { useParams } from "react-router";
 import socket from "../lib/socket";
 import OnScreenKeyboard from "../Components/Keyboard.tsx";
+import {Box, Heading, Text, Badge, Button, Card, Progress, Callout} from "@radix-ui/themes";
+import TypingBox from "../Components/TypingBox.tsx";
+import {ExclamationTriangleIcon, LightningBoltIcon, StopwatchIcon} from "@radix-ui/react-icons";
 /*
 * Prank modes:
 * 0. Remap keys aka shuffle layout
@@ -11,6 +14,18 @@ import OnScreenKeyboard from "../Components/Keyboard.tsx";
 * 3. latency until shown
 * 4. commonly misspelled words (no effect here, only on backend)
 * */
+
+function getPercentageDone(typed: string, fullText: string): number {
+    if (fullText.length === 0) return 0;
+    const len = Math.min(typed.length, fullText.length);
+    let correctChars = 0;
+    for (let i = 0; i < len; i++) {
+        if (typed[i] === fullText[i]) {
+            correctChars++;
+        }
+    }
+    return Math.round((correctChars / fullText.length) * 100);
+}
 
 type RoomClassProps = {
     params: {
@@ -30,6 +45,8 @@ type RoomClassState = {
     doneTyping: boolean;
     keyState: KeyState;
     activeKeys?: ReadonlySet<string>;
+    inCountdown: number,
+    keyCount: Map<string, number>
 };
 
 
@@ -54,7 +71,10 @@ class RoomClass extends React.Component<
             keyState: { key: "", time: 0 },
             doneTyping: false,
             activeKeys: new Set<string>(),
+            inCountdown: -1,
+            keyCount: new Map<string, number>(),
         };
+
     }
 
     handleKeyPress = async (event: KeyboardEvent) => {
@@ -143,11 +163,14 @@ class RoomClass extends React.Component<
             // compare lowercase keys for double-press logic
             if(keyLower === lastKeyState.key) {
                 const timeDiff = Date.now() - lastKeyState.time;
+
                 // Double press must be within 500ms
                 if(timeDiff > 500) {
                     // Ignore this key press, wait for next
                     this.setState({ keyState: { key: keyLower, time: Date.now() } });
                     return;
+                } else {
+                    this.setState({ keyState: { key: "", time: 0}});
                 }
             } else {
                 // Different key pressed, ignore this press
@@ -204,7 +227,7 @@ class RoomClass extends React.Component<
         const activeKey = key.toLowerCase();
 
         // Set last key state
-        this.setState({ keyState: { key: activeKey, time: Date.now() } });
+
 
         // Activate key
         this.setState((prevState) => {
@@ -222,7 +245,6 @@ class RoomClass extends React.Component<
             });
         }, 100);
     }
-
 
     componentDidMount() {
         window.addEventListener("keydown", this.handleKeyPress);
@@ -258,9 +280,24 @@ class RoomClass extends React.Component<
         );
     }
 
-    onRoomUpdate = (data: string) => {
+    onRoomUpdate = async (data: string) => {
         const room: Room = JSON.parse(data.trim());
+        const oldRoom = this.state.roomState;
         const name = localStorage.getItem("playerName") ?? "";
+
+        if(oldRoom?.started == false && room.started) {
+            // Start countdown of 5 seconds
+            for(let timer = 5; timer > 0; timer--) {
+                this.setState({
+                    inCountdown: timer
+                });
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
+
+            this.setState({
+                inCountdown: 0
+            })
+        }
 
         const player = room.players.find(
             (p) => p.name === name
@@ -274,60 +311,117 @@ class RoomClass extends React.Component<
     };
 
     render() {
-        const { roomState, player, isAdmin, activeKeys } = this.state;
+        const { roomState, player, isAdmin, activeKeys, inCountdown } = this.state;
+
+        const playersInfo = [];
+        for(const p of roomState?.players || []) {
+            playersInfo.push({
+                name: p.name,
+                percentage: getPercentageDone(p.typed, roomState?.text || ""),
+            })
+        }
 
         if (!this.roomId) {
-            return <p>Invalid room</p>;
+            window.location.href = "/";
+            return null;
         }
 
         return (
-            <div>
-                <p>Room ID: {this.roomId}</p>
-                {isAdmin ? (
-                    <>
-                        <p>You are admin</p>
-                        <button onClick={()=>{
-                            socket.emit("room:start", JSON.stringify({
-                                roomId: this.roomId,
-                                name: player?.name
-                            }));
-                        }}>Start game</button>
-                    </>
-                ) : (
-                    <p>You are a player</p>
-                )}
+            <div className="min-h-screen flex justify-center bg-gray-100 p-6">
+                <div className="absolute top-4 left-4">
+                    <a href="/" className="text font-bold text-gray-700 hover:text-gray-900">
+                        &larr; Home
+                    </a>
+                </div>
 
-                {roomState && (
-                    <>
-                        <p>Started: {roomState.started ? "Yes" : "No"}</p>
-                        <p>Text: {roomState.text}</p>
+                {roomState && player &&
+                    <Box className="w-full max-w-3xl p-6 bg-white rounded-lg shadow-md">
+                        <div className="flex justify-between">
+                            <div>
+                                <Heading as="h3"> Room ID: {this.roomId} </Heading>
+                                <Text size="2" className="text-gray-600"> Welcome, {player?.name} </Text>
+                            </div>
+                            <div className="flex items-center justify-end gap-2">
+                                {isAdmin && (
+                                    <Badge variant="solid" color="green"> Admin </Badge>
+                                )}
+                                {roomState?.started ? (
+                                    <Badge variant="solid" color="blue"> Game Started </Badge>
+                                ) : (
+                                    <Badge variant="solid" color="yellow"> Waiting to Start </Badge>
+                                )}
+                            </div>
+                        </div>
+                        <div className="pt-5">
+                            {
+                                inCountdown == 0 && (
+                                    <Callout.Root color="green" className="flex-col items-center">
+                                        <Callout.Icon>
+                                            <LightningBoltIcon />
+                                        </Callout.Icon>
+                                        <Callout.Text>
+                                            Go!
+                                        </Callout.Text>
+                                    </Callout.Root>
+                                )
+                            }
+                            {
+                                inCountdown > 0 && (
+                                    <Callout.Root color="yellow" className="flex-col items-center">
+                                        <Callout.Icon>
+                                            <StopwatchIcon />
+                                        </Callout.Icon>
+                                        <Callout.Text>
+                                            Starting in {inCountdown}...
+                                        </Callout.Text>
+                                    </Callout.Root>
+                                )
+                            }
+                        </div>
+                        {isAdmin && !roomState?.started ? (
+                            <div className="pt-5">
+                                <Button style={{
+                                    width: "100%",
+                                }} onClick={() => {
+                                    socket.emit(
+                                        "room:start",
+                                        JSON.stringify({
+                                            roomId: this.roomId,
+                                            name: player?.name,
+                                        })
+                                    );
+                                }}>
+                                    Start Game
+                                </Button>
+                            </div>
+                        ) : null}
 
-                        <h3>Players</h3>
-                        <ul>
-                            {roomState.players.map((p) => (
-                                <li key={p.name}>
-                                    {p.name}: {p.typed}
-                                </li>
+                        <div className="flex-col mt-5">
+                            <Heading as="h4">Players ({playersInfo.length})</Heading>
+                            {playersInfo.map((p : {name: string, percentage: number}) => (
+                                <Card className="flex-col mt-3">
+                                    <div className="flex justify-between mb-2">
+                                        <Text>{p.name}</Text>
+                                        <Text>{p.percentage}%</Text>
+                                    </div>
+                                    <Progress value={p.percentage} className="w-full" />
+                                </Card>
                             ))}
-                        </ul>
-                    </>
-                )}
+                        </div>
 
-                {player && (
-                    <>
-                        <h3>You</h3>
-                        <p>Name: {player.name}</p>
-                        <p>Typed: {player.typed}</p>
-                    </>
-                )}
+                        <div>
+                            <TypingBox targetText={roomState.text} currentText={player.typed} />
+                        </div>
 
-                {roomState && (
-                    <>
-                        <OnScreenKeyboard layout={roomState.keyboardLayout} activeKeys={activeKeys} />
-                    </>
-                )}
+                        <div>
+                            <OnScreenKeyboard layout={roomState.keyboardLayout} activeKeys={activeKeys} />
+                        </div>
+                    </Box>
+                }
             </div>
-        );
+
+        )
+
     }
 }
 

@@ -2,11 +2,33 @@
 
 :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  /*line-height: 1.5;*/
+  /*font-weight: 400;*/
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
+
+
+.fake-caret {
+  display: inline-block;
+  width: 0;
+  height: 1.2em;
+  margin-right: -1px;
+  vertical-align: bottom;
+
+  border-left: 2px solid black;
+  animation: caret-blink 1s step-end infinite;
+}
+
+/*@keyframes caret-blink {*/
+/*  from,*/
+/*  to {*/
+/*    border-color: transparent;*/
+/*  }*/
+/*  50% {*/
+/*    border-color: black;*/
+/*  }*/
+/*}*/
