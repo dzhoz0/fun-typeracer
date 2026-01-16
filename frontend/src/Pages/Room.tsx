@@ -54,7 +54,8 @@ type RoomClassState = {
     keyState: KeyState;
     activeKeys?: ReadonlySet<string>;
     inCountdown: number,
-    keyCount: Map<string, number>
+    keyCount: Map<string, number>,
+    elapsedMs: number, // milliseconds elapsed since game started
 };
 
 
@@ -65,6 +66,10 @@ class RoomClass extends React.Component<
 
     private lagBuffer: string[] = [];
     private lagTimer: number | null = null;
+
+    // Timer fields (not part of React state to hold interval id and start timestamp)
+    private timerIntervalId: number | null = null;
+    private timerStart: number | null = null;
 
     roomId?: string;
 
@@ -82,8 +87,38 @@ class RoomClass extends React.Component<
             activeKeys: new Set<string>(),
             inCountdown: -1,
             keyCount: new Map<string, number>(),
+            // elapsedMs is used to render the timer (ms). Updated frequently by interval.
+            elapsedMs: 0,
         };
 
+    }
+
+    startTimer = () => {
+        // start timestamp
+        this.timerStart = Date.now();
+        // initialize elapsed
+        this.setState({elapsedMs: 0});
+
+        // clear any existing interval just in case
+        if (this.timerIntervalId) {
+            window.clearInterval(this.timerIntervalId);
+            this.timerIntervalId = null;
+        }
+
+        // update every 50ms for smoothness
+        this.timerIntervalId = window.setInterval(() => {
+            if (this.timerStart !== null) {
+                this.setState({elapsedMs: Date.now() - this.timerStart});
+            }
+        }, 50) as unknown as number;
+    }
+
+    stopTimer = () => {
+        if (this.timerIntervalId) {
+            window.clearInterval(this.timerIntervalId);
+            this.timerIntervalId = null;
+        }
+        this.timerStart = null;
     }
 
     handleKeyPress = async (event: KeyboardEvent) => {
@@ -230,6 +265,8 @@ class RoomClass extends React.Component<
 
         if (newTyped === this.state.roomState?.text) {
             this.setState({doneTyping: true});
+            // stop the timer when player finishes
+            this.stopTimer();
         }
 
         // Use lowercase key for keyState and active key highlighting
@@ -287,6 +324,13 @@ class RoomClass extends React.Component<
                 roomId: this.roomId,
             })
         );
+
+        // clear any running timers
+        if (this.lagTimer !== null) {
+            window.clearTimeout(this.lagTimer);
+            this.lagTimer = null;
+        }
+        this.stopTimer();
     }
 
     onRoomUpdate = async (data: string) => {
@@ -306,6 +350,14 @@ class RoomClass extends React.Component<
             this.setState({
                 inCountdown: 0
             })
+
+            // start the timer when the countdown finishes and the game has started
+            this.startTimer();
+        }
+
+        // stop timer if game ended
+        if (oldRoom?.started === true && room.started === false) {
+            this.stopTimer();
         }
 
         const player = room.players.find(
@@ -320,7 +372,7 @@ class RoomClass extends React.Component<
     };
 
     render() {
-        const {roomState, player, isAdmin, activeKeys, inCountdown} = this.state;
+        const {roomState, player, isAdmin, activeKeys, inCountdown, elapsedMs} = this.state;
 
         const playersInfo = [];
         for (const p of roomState?.players || []) {
@@ -388,7 +440,7 @@ class RoomClass extends React.Component<
                                             <LightningBoltIcon/>
                                         </Callout.Icon>
                                         <Callout.Text>
-                                            Go!
+                                            Go! <span style={{marginLeft: 8, fontWeight: 600}}>{(elapsedMs/1000).toFixed(2)}s</span>
                                         </Callout.Text>
                                     </Callout.Root>
                                 )
