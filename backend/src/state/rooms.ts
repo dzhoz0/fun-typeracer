@@ -40,8 +40,8 @@ class Rooms {
         this.id = id;
         this.adminName = adminId;
         // prankMode is a random number from 0 to 4
-        // this.prankMode = Math.floor(Math.random() * 5);
-        this.prankMode = 2;
+        this.prankMode = Math.floor(Math.random() * 5);
+        // this.prankMode = 4;
         if(this.prankMode == 0) {
             this.layout = shuffleString(this.layout);
         }
