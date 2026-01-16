@@ -54,7 +54,7 @@ class Rooms {
         ];
 
         // It is always ensured word_set exists (actually only in frontend)
-        let word_set = 'english_5k';
+        let word_set = 'english_1k';
         if(this.prankMode == 4) word_set = 'english_commonly_misspelled';
 
         const wordSetFile = path.join(wordSetsPath, `${word_set}.json`);
