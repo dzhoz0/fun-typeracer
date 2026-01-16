@@ -67,7 +67,7 @@ export default function TypingBox({ targetText, currentText }: TypingBoxProps) {
                         return (
                             <span
                                 key="end"
-                                ref={(el) => (charRefs.current[index] = el)}
+                                ref={(el) => { charRefs.current[index] = el; }}
                                 className="inline-block w-[0.5ch]"
                             />
                         );
@@ -83,7 +83,7 @@ export default function TypingBox({ targetText, currentText }: TypingBoxProps) {
                     return (
                         <span
                             key={index}
-                            ref={(el) => (charRefs.current[index] = el)}
+                            ref={(el) => { charRefs.current[index] = el; }}
                             className={`relative ${className}`}
                         >
                             {targetChar === " " ? (

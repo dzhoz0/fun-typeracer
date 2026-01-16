@@ -324,9 +324,11 @@ class RoomClass extends React.Component<
 
         const playersInfo = [];
         for (const p of roomState?.players || []) {
+            const rankIndex = roomState?.rankings?.indexOf(p.name);
+            const ranking = (typeof rankIndex === 'number' && rankIndex >= 0) ? rankIndex + 1 : 0;
             playersInfo.push({
                 name: p.name,
-                ranking: roomState?.rankings.indexOf(p.name) + 1 || 0,
+                ranking,
                 percentage: getPercentageDone(p.typed, roomState?.text || ""),
             })
         }
