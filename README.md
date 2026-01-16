@@ -18,3 +18,7 @@ The code could have been done better such as better error handling and more stru
 **For backend:**
 
 `cd backend && npm install && npm run dev`
+
+## Running production
+This project uses docker for production.
+

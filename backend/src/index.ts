@@ -14,20 +14,21 @@ app.use(express.text());
 const httpServer = createServer(app);
 
 const io = new Server(httpServer, {
-  cors: {
-    origin: '*',
-  },
+    path: '/api/socket.io',
+    cors: {
+        origin: "*",
+    }
 });
 
 setupSocket(io);
 
 const PORT = process.env.PORT || 3000;
 
-app.get('/', (req, res) => {
+app.get('/api', (req, res) => {
     res.send("Hi cutie:3");
 });
 
-app.post('/createRoom', (req, res) => {
+app.post('/api/createRoom', (req, res) => {
     // Create a room and return id
 
     console.log("Creating room with admin name:", req.body);
@@ -36,7 +37,7 @@ app.post('/createRoom', (req, res) => {
     // res.send(req.body);
 })
 
-app.get('/getRoom/:roomId', (req, res) => {
+app.get('/api/getRoom/:roomId', (req, res) => {
     const roomId = req.params.roomId;
     try {
         let room = rooms.getRoom(roomId);
