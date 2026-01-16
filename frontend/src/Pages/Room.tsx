@@ -15,6 +15,14 @@ import {ExclamationTriangleIcon, LightningBoltIcon, StopwatchIcon} from "@radix-
 * 4. commonly misspelled words (no effect here, only on backend)
 * */
 
+const prankModesDescription = [
+    "Keys are remapped to a random layout. See the on-screen keyboard for reference.",
+    "Caps Lock is on. You need to hold Shift to type lowercase letters.",
+    "You need to press each key twice quickly to register it.",
+    "There is a noticeable lag between when you type and when the character appears.",
+    "The text contains commonly misspelled words. Watch out for typos!",
+];
+
 function getPercentageDone(typed: string, fullText: string): number {
     if (fullText.length === 0) return 0;
     const len = Math.min(typed.length, fullText.length);
@@ -59,6 +67,7 @@ class RoomClass extends React.Component<
     private lagTimer: number | null = null;
 
     roomId?: string;
+
     constructor(props: RoomClassProps) {
         super(props);
 
@@ -68,7 +77,7 @@ class RoomClass extends React.Component<
             roomState: undefined,
             player: undefined,
             isAdmin: false,
-            keyState: { key: "", time: 0 },
+            keyState: {key: "", time: 0},
             doneTyping: false,
             activeKeys: new Set<string>(),
             inCountdown: -1,
@@ -106,7 +115,7 @@ class RoomClass extends React.Component<
 
             this.setState((prevState) => ({
                 player: prevState.player
-                    ? { ...prevState.player, typed: newTyped }
+                    ? {...prevState.player, typed: newTyped}
                     : prevState.player,
             }));
 
@@ -114,7 +123,7 @@ class RoomClass extends React.Component<
                 "room:send",
                 JSON.stringify({
                     roomId: this.roomId,
-                    payload: { name, typed: newTyped },
+                    payload: {name, typed: newTyped},
                 })
             );
 
@@ -128,7 +137,7 @@ class RoomClass extends React.Component<
         // keep a lowercase version for keyState / activeKeys
         let keyLower = key.toLowerCase();
 
-        if(this.state.roomState.prankMode == 0) {
+        if (this.state.roomState.prankMode == 0) {
             // Remap key according to layout
             const layout = this.state.roomState.layout;
             const standardLayout = 'qwertyuiopasdfghjklzxcvbnm';
@@ -137,10 +146,10 @@ class RoomClass extends React.Component<
             const keyLowerForIndex = key.toLowerCase();
 
             const index = standardLayout.indexOf(keyLowerForIndex);
-            if(index !== -1) {
+            if (index !== -1) {
                 let mappedKey = layout[index];
                 // Preserve case for typed character
-                if(isUpperCase(key)) {
+                if (isUpperCase(key)) {
                     mappedKey = mappedKey.toUpperCase();
                 }
                 key = mappedKey;
@@ -148,9 +157,9 @@ class RoomClass extends React.Component<
             }
         }
 
-        if(this.state.roomState.prankMode == 1) {
+        if (this.state.roomState.prankMode == 1) {
             // Make uppercase if lowercase, and vice versa (affects typed char)
-            if(key === key.toLowerCase()) {
+            if (key === key.toLowerCase()) {
                 key = key.toUpperCase();
             } else {
                 key = key.toLowerCase();
@@ -158,23 +167,23 @@ class RoomClass extends React.Component<
             keyLower = key.toLowerCase();
         }
 
-        if(this.state.roomState.prankMode == 2) {
+        if (this.state.roomState.prankMode == 2) {
             const lastKeyState = this.state.keyState;
             // compare lowercase keys for double-press logic
-            if(keyLower === lastKeyState.key) {
+            if (keyLower === lastKeyState.key) {
                 const timeDiff = Date.now() - lastKeyState.time;
 
                 // Double press must be within 500ms
-                if(timeDiff > 500) {
+                if (timeDiff > 500) {
                     // Ignore this key press, wait for next
-                    this.setState({ keyState: { key: keyLower, time: Date.now() } });
+                    this.setState({keyState: {key: keyLower, time: Date.now()}});
                     return;
                 } else {
-                    this.setState({ keyState: { key: "", time: 0}});
+                    this.setState({keyState: {key: "", time: 0}});
                 }
             } else {
                 // Different key pressed, ignore this press
-                this.setState({ keyState: { key: keyLower, time: Date.now() } });
+                this.setState({keyState: {key: keyLower, time: Date.now()}});
                 return;
             }
         }
@@ -207,7 +216,7 @@ class RoomClass extends React.Component<
 
         this.setState((prevState) => ({
             player: prevState.player
-                ? { ...prevState.player, typed: newTyped }
+                ? {...prevState.player, typed: newTyped}
                 : prevState.player,
         }));
 
@@ -215,12 +224,12 @@ class RoomClass extends React.Component<
             "room:send",
             JSON.stringify({
                 roomId: this.roomId,
-                payload: { name: this.state.player?.name, typed: newTyped },
+                payload: {name: this.state.player?.name, typed: newTyped},
             })
         );
 
         if (newTyped === this.state.roomState?.text) {
-            this.setState({ doneTyping: true });
+            this.setState({doneTyping: true});
         }
 
         // Use lowercase key for keyState and active key highlighting
@@ -233,7 +242,7 @@ class RoomClass extends React.Component<
         this.setState((prevState) => {
             const newActiveKeys = new Set(prevState.activeKeys);
             newActiveKeys.add(activeKey);
-            return { activeKeys: newActiveKeys };
+            return {activeKeys: newActiveKeys};
         });
 
         // Deactivate key after 100ms
@@ -241,7 +250,7 @@ class RoomClass extends React.Component<
             this.setState((prevState) => {
                 const newActiveKeys = new Set(prevState.activeKeys);
                 newActiveKeys.delete(activeKey);
-                return { activeKeys: newActiveKeys };
+                return {activeKeys: newActiveKeys};
             });
         }, 100);
     }
@@ -285,9 +294,9 @@ class RoomClass extends React.Component<
         const oldRoom = this.state.roomState;
         const name = localStorage.getItem("playerName") ?? "";
 
-        if(oldRoom?.started == false && room.started) {
+        if (oldRoom?.started == false && room.started) {
             // Start countdown of 5 seconds
-            for(let timer = 5; timer > 0; timer--) {
+            for (let timer = 5; timer > 0; timer--) {
                 this.setState({
                     inCountdown: timer
                 });
@@ -311,12 +320,13 @@ class RoomClass extends React.Component<
     };
 
     render() {
-        const { roomState, player, isAdmin, activeKeys, inCountdown } = this.state;
+        const {roomState, player, isAdmin, activeKeys, inCountdown} = this.state;
 
         const playersInfo = [];
-        for(const p of roomState?.players || []) {
+        for (const p of roomState?.players || []) {
             playersInfo.push({
                 name: p.name,
+                ranking: roomState?.rankings.indexOf(p.name) + 1 || 0,
                 percentage: getPercentageDone(p.typed, roomState?.text || ""),
             })
         }
@@ -352,12 +362,28 @@ class RoomClass extends React.Component<
                                 )}
                             </div>
                         </div>
+
+                        <div>
+                            {
+                                roomState.prankMode != -1 && (
+                                    <Callout.Root color="orange" className="mt-5">
+                                        <Callout.Icon>
+                                            <ExclamationTriangleIcon/>
+                                        </Callout.Icon>
+                                        <Callout.Text>
+                                            Modification: {prankModesDescription[roomState.prankMode]}
+                                        </Callout.Text>
+                                    </Callout.Root>
+                                )
+                            }
+                        </div>
+
                         <div className="pt-5">
                             {
                                 inCountdown == 0 && (
                                     <Callout.Root color="green" className="flex-col items-center">
                                         <Callout.Icon>
-                                            <LightningBoltIcon />
+                                            <LightningBoltIcon/>
                                         </Callout.Icon>
                                         <Callout.Text>
                                             Go!
@@ -369,7 +395,7 @@ class RoomClass extends React.Component<
                                 inCountdown > 0 && (
                                     <Callout.Root color="yellow" className="flex-col items-center">
                                         <Callout.Icon>
-                                            <StopwatchIcon />
+                                            <StopwatchIcon/>
                                         </Callout.Icon>
                                         <Callout.Text>
                                             Starting in {inCountdown}...
@@ -378,6 +404,7 @@ class RoomClass extends React.Component<
                                 )
                             }
                         </div>
+
                         {isAdmin && !roomState?.started ? (
                             <div className="pt-5">
                                 <Button style={{
@@ -398,23 +425,23 @@ class RoomClass extends React.Component<
 
                         <div className="flex-col mt-5">
                             <Heading as="h4">Players ({playersInfo.length})</Heading>
-                            {playersInfo.map((p : {name: string, percentage: number}) => (
+                            {playersInfo.map((p: { name: string, ranking: number, percentage: number }) => (
                                 <Card className="flex-col mt-3">
                                     <div className="flex justify-between mb-2">
-                                        <Text>{p.name}</Text>
+                                        <Text>{p.name} {p.ranking != 0 && "#" + p.ranking}</Text>
                                         <Text>{p.percentage}%</Text>
                                     </div>
-                                    <Progress value={p.percentage} className="w-full" />
+                                    <Progress value={p.percentage} className="w-full"/>
                                 </Card>
                             ))}
                         </div>
 
                         <div>
-                            <TypingBox targetText={roomState.text} currentText={player.typed} />
+                            <TypingBox targetText={roomState.text} currentText={player.typed}/>
                         </div>
 
                         <div>
-                            <OnScreenKeyboard layout={roomState.keyboardLayout} activeKeys={activeKeys} />
+                            <OnScreenKeyboard layout={roomState.keyboardLayout} activeKeys={activeKeys}/>
                         </div>
                     </Box>
                 }
@@ -424,7 +451,6 @@ class RoomClass extends React.Component<
 
     }
 }
-
 
 export default function Room() {
     const params = useParams<{ roomId: string }>();

@@ -1,4 +1,5 @@
 import { Box } from "@radix-ui/themes";
+import { useEffect, useRef } from "react";
 
 type TypingBoxProps = {
     targetText: string;
@@ -6,15 +7,35 @@ type TypingBoxProps = {
 };
 
 export default function TypingBox({ targetText, currentText }: TypingBoxProps) {
+    const charRefs = useRef<(HTMLSpanElement | null)[]>([]);
+    const caretRef = useRef<HTMLDivElement | null>(null);
+    const containerRef = useRef<HTMLDivElement | null>(null);
+
+    useEffect(() => {
+        const caret = caretRef.current;
+        const container = containerRef.current;
+        const charEl = charRefs.current[currentText.length];
+
+        if (!caret || !container || !charEl) return;
+
+        const charRect = charEl.getBoundingClientRect();
+        const containerRect = container.getBoundingClientRect();
+
+        const x = charRect.left - containerRect.left;
+        const y = charRect.top - containerRect.top - 2;
+
+        caret.style.transform = `translate(${x}px, ${y}px)`;
+        caret.style.height = `${charRect.height}px`;
+    }, [currentText]);
+
     return (
         <Box className="w-full mx-auto py-5">
-            {/* Label */}
             <div className="mb-2 text-sm font-medium text-gray-700">
                 Text to Type
             </div>
 
-            {/* Typing container */}
             <Box
+                ref={containerRef}
                 className="
                   relative
                   rounded-lg
@@ -29,32 +50,53 @@ export default function TypingBox({ targetText, currentText }: TypingBoxProps) {
                   wrap-break-word
                 "
             >
+                {/* Caret */}
+                <div
+                    ref={caretRef}
+                    className="typing-caret"
+                />
+
                 {Array.from({
-                    length: Math.max(targetText.length, currentText.length),
+                    length: Math.max(targetText.length, currentText.length) + 1,
                 }).map((_, index) => {
                     let className = "text-gray-500";
                     const typedChar = currentText[index];
                     const targetChar = targetText[index];
 
+                    if (index === targetText.length) {
+                        return (
+                            <span
+                                key="end"
+                                ref={(el) => (charRefs.current[index] = el)}
+                                className="inline-block w-[0.5ch]"
+                            />
+                        );
+                    }
+
                     if (typedChar !== undefined) {
-                        if (targetChar === undefined || typedChar !== targetChar) {
-                            className = "text-red-500";
-                        } else {
-                            className = "text-green-600";
-                        }
+                        className =
+                            typedChar === targetChar
+                                ? "text-green-600"
+                                : "text-red-500";
                     }
 
                     return (
-                        <span key={index} className="relative">
-                            {index === currentText.length && (
-                                <span>
-                                    |
-                                </span>
+                        <span
+                            key={index}
+                            ref={(el) => (charRefs.current[index] = el)}
+                            className={`relative ${className}`}
+                        >
+                            {targetChar === " " ? (
+                                <span
+                                      className={
+                                          typedChar !== undefined && typedChar !== " "
+                                              ? "space-error"
+                                              : "space"
+                                      }
+                                />
+                            ) : (
+                                  targetChar
                             )}
-
-                            <span className={className}>
-                                {typedChar ?? targetChar}
-                            </span>
                         </span>
                     );
                 })}

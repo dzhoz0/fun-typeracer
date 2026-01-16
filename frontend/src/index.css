@@ -1,34 +1,38 @@
 @import "tailwindcss";
 
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  /*line-height: 1.5;*/
-  /*font-weight: 400;*/
+    font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+    /*line-height: 1.5;*/
+    /*font-weight: 400;*/
 
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 
-.fake-caret {
-  display: inline-block;
-  width: 0;
-  height: 1.2em;
-  margin-right: -1px;
-  vertical-align: bottom;
+.typing-caret {
+    position: absolute;
+    width: 2px;
+    background-color: black;
+    top: 0;
+    left: 0;
 
-  border-left: 2px solid black;
-  animation: caret-blink 1s step-end infinite;
+    transform-origin: top left;
+    transition:
+        transform 0.12s ease-out,
+        height 0.12s ease-out;
 }
 
-/*@keyframes caret-blink {*/
-/*  from,*/
-/*  to {*/
-/*    border-color: transparent;*/
-/*  }*/
-/*  50% {*/
-/*    border-color: black;*/
-/*  }*/
-/*}*/
+.space {
+    display: inline-block;
+    width: 0.6ch;
+}
+
+.space-error {
+    display: inline-block;
+    width: 0.6ch;
+    border-bottom: 2px solid red;
+}
+
