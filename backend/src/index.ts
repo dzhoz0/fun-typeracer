@@ -36,6 +36,17 @@ app.post('/createRoom', (req, res) => {
     // res.send(req.body);
 })
 
+app.get('/getRoom/:roomId', (req, res) => {
+    const roomId = req.params.roomId;
+    try {
+        let room = rooms.getRoom(roomId);
+        console.log("room found:", room);
+        res.status(200).send("1")
+    } catch (error) {
+        res.status(404).send("0");
+    }
+})
+
 httpServer.listen(PORT, () => {
     console.log("Server is running at :3000");
 })
