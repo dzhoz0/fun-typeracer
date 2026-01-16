@@ -12,6 +12,9 @@ The code could have been done better such as better error handling and more stru
 
 ## Running for development
 **For frontend:**
+
 `cd frontend && npm install && npm run dev`
+
 **For backend:**
+
 `cd backend && npm install && npm run dev`
