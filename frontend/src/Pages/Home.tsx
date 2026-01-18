@@ -82,7 +82,7 @@ class Home extends React.Component<object, HomeState> {
         const { nameInput, roomIdInput, nameSaved } = this.state;
 
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-100 p-6">
+            <div className="min-h-screen flex items-center page-bg justify-center p-6">
                 <Box className="bg-white p-6 rounded-2xl max-w-md w-full shadow-sm border border-gray-200">
                     <Heading as="h1" className="text-2xl font-semibold text-gray-900 mb-1">Welcome</Heading>
                     <Text className="text-gray-600 mb-6">Set your name and join or create a room</Text>

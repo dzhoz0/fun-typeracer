@@ -391,7 +391,7 @@ class RoomClass extends React.Component<
         }
 
         return (
-            <div className="min-h-screen flex justify-center bg-gray-100 p-6">
+            <div className="min-h-screen flex justify-center page-bg p-6">
                 <div className="absolute top-4 left-4">
                     <a href="/" className="text font-bold text-gray-700 hover:text-gray-900">
                         &larr; Home

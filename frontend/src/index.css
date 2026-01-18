@@ -11,6 +11,25 @@
     -moz-osx-font-smoothing: grayscale;
 }
 
+.page-bg::before {
+    /* Fallback color if no background image is set */
+    background-color: #f3f4f6;
+
+    content: "";
+    position: absolute;
+    inset: 0;
+    background-image: none;
+
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: center;
+
+    filter: blur(3px);
+    transform: scale(1.1);
+    z-index: -1;
+}
+
+
 
 .typing-caret {
     position: absolute;
