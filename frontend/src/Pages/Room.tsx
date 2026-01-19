@@ -136,17 +136,31 @@ class RoomClass extends React.Component<
         ) {
             return;
         }
-        if (event.ctrlKey || event.metaKey || event.altKey) return;
+
+
+        const isCtrlOrMeta = event.ctrlKey || event.metaKey;
+        if ((event.ctrlKey || event.metaKey || event.altKey) && !(isCtrlOrMeta && (event.key === "Backspace" || event.key === "Delete"))) {
+            return;
+        }
+
 
         const name = localStorage.getItem("playerName") ?? "";
         const currentTyped = this.state.player?.typed ?? "";
+
+
 
         if (event.key === "Backspace" || event.key === "Delete") {
             if (currentTyped.length === 0) return;
 
             event.preventDefault();
+            let newTyped = currentTyped;
+            if(isCtrlOrMeta) {
+                newTyped = currentTyped.replace(/\s*\S+\s*$/, "");
+            }
 
-            const newTyped = currentTyped.slice(0, -1);
+            else {
+                newTyped = currentTyped.slice(0, -1);
+            }
 
             this.setState((prevState) => ({
                 player: prevState.player

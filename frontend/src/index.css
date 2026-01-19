@@ -16,7 +16,7 @@
     background-color: #f3f4f6;
 
     content: "";
-    position: absolute;
+    position: fixed;
     inset: 0;
     background-image: none;
 
