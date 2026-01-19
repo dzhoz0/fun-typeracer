@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const wordSetsPath = path.join(__dirname, "../word_sets");
-const numWords = 20;
+let numWords = 50;
 
 export type Player = {
     name: string,
@@ -55,7 +55,16 @@ class Rooms {
 
         // It is always ensured word_set exists (actually only in frontend)
         let word_set = 'english_1k';
-        if(this.prankMode == 4) word_set = 'english_commonly_misspelled';
+
+        if(this.prankMode == 0) {
+            numWords = 7;
+        } else if(this.prankMode != 2) {
+            numWords = 30;
+        }
+
+        if(this.prankMode == 4) {
+            word_set = 'english_commonly_misspelled';
+        }
 
         const wordSetFile = path.join(wordSetsPath, `${word_set}.json`);
 
